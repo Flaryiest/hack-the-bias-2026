@@ -4,6 +4,9 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
+
 
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -153,9 +156,20 @@ class TxCallbacks : public BLECharacteristicCallbacks {
 class RxCallbacks : public BLECharacteristicCallbacks {
 public:
   void onWrite(BLECharacteristic* c) override {
-    String s = c->getValue();
-    if (s.length() == 0) return;
+    
+    uint8_t* data = c->getData(); //value
+    size_t len = c->getValue().length(); //length
+    
+    if (len == 0) return;
 
+    if (len == 10) {    //10 bytes of motor command
+      Serial.write(data, 10);
+      bleSendTextLine("OK MOTOR_CMD_SENT");
+      return;
+    }
+    
+    
+    String s = c->getValue().c_str();//text commands
     s.trim();
     if (s.length() == 0) return;
 
@@ -182,6 +196,7 @@ public:
       return;
     }
 
+    // Forward unknown text commands to Mega
     Serial.print(s);
     Serial.print("\n");
   }
