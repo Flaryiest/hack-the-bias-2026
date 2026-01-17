@@ -35,6 +35,11 @@ BLECharacteristic* txChar = nullptr;
 volatile bool bleConnected = false;
 volatile bool bleNotifyEnabled = false;
 
+
+volatile bool streamingEnabled = false;
+unsigned long lastStreamTime = 0;
+const unsigned long STREAM_INTERVAL_MS = 500;  //send image every 500ms (2 FPS)
+
 static const uint32_t MEGA_BAUD = 115200;
 
 // ---------- Small helpers ----------
@@ -51,7 +56,7 @@ static void bleSendImage(camera_fb_t* fb) {
     return;
   }
 
-  // Send header
+  
   uint8_t hdr[5];
   hdr[0] = 'I';
   uint32_t len = (uint32_t)fb->len;
@@ -111,7 +116,7 @@ static bool initCamera() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
-  // Default safe values
+  
   config.fb_count = 1;
   config.fb_location = CAMERA_FB_IN_DRAM;
 
@@ -178,6 +183,8 @@ public:
         bleSendTextLine("OK PONG");
         return;
       }
+      
+      // Single snapshot
       if (s == "CAM SNAP") {
         camera_fb_t* fb = esp_camera_fb_get();
         if (!fb || fb->format != PIXFORMAT_JPEG) {
@@ -192,11 +199,35 @@ public:
         return;
       }
       
+      
+      if (s == "CAM START") { //continuous streaming
+        streamingEnabled = true;
+        bleSendTextLine("OK STREAM_START");
+        return;
+      }
+      
+      
+      if (s == "CAM STOP") {
+        streamingEnabled = false;
+        bleSendTextLine("OK STREAM_STOP");
+        return;
+      }
+      
+      
+      if (s == "CAM STATUS") {//get current status
+        String status = "OK STATUS streaming=";
+        status += streamingEnabled ? "ON" : "OFF";
+        status += " connected=";
+        status += bleConnected ? "YES" : "NO";
+        bleSendTextLine(status);
+        return;
+      }
+      
       bleSendTextLine("ERR UNKNOWN_CAM_CMD");
       return;
     }
 
-    // Forward unknown text commands to Mega
+    //forward unknown text commands to Mega
     Serial.print(s);
     Serial.print("\n");
   }
@@ -208,7 +239,6 @@ static void markNotifyEnabled() {
 }
 
 void setup() {
-  // Serial to Mega
   Serial.begin(MEGA_BAUD);
   Serial.println();
   Serial.println("DIAGNOSTICS SETUP START");
@@ -263,8 +293,26 @@ void loop() {
       bleSendTextLine(String("OK PSRAM ") + (psramFound() ? "YES" : "NO"));
     }
   }
-  if (!bleConnected) t0 = 0;
+  if (!bleConnected) {
+    t0 = 0;
+    streamingEnabled = false; //stop on disconnect
+  }
 
+  
+  if (streamingEnabled && bleConnected && bleNotifyEnabled) {//continuous streaming mode for back camera
+    unsigned long now = millis();
+    if (now - lastStreamTime >= STREAM_INTERVAL_MS) {
+      lastStreamTime = now;
+      
+      camera_fb_t* fb = esp_camera_fb_get();
+      if (fb && fb->format == PIXFORMAT_JPEG) {
+        bleSendImage(fb);
+      }
+      if (fb) esp_camera_fb_return(fb);
+    }
+  }
+
+  
   static String megaLine;
   while (Serial.available()) {
     char c = (char)Serial.read();
@@ -281,7 +329,7 @@ void loop() {
         megaLine = "";
       }
     }
-  }
+  }//Mega to phone
 
   delay(5);
 }
