@@ -17,7 +17,7 @@ const int NUM_MOTORS = 3;
 unsigned long lastUpdateTime = 0;
 
 void setup() {
-  Serial.begin(9600);
+  Serial1.begin(115200);
   
   for (int i = 0; i < NUM_MOTORS; i++) {
     pinMode(motors[i].pinA, OUTPUT);
@@ -29,8 +29,8 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    String command = Serial.readStringUntil('\n');
+  if (Serial1.available() > 0) {
+    String command = Serial1.readStringUntil('\n');
     command.trim();
     parseCommand(command);
   }
