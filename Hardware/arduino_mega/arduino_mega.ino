@@ -1,55 +1,121 @@
-//mega motor controller
-//receive from ESP32-CAM via Serial
+struct Motor {
+  int pinA;
+  int pinB;
+  int frequency;
+  bool enabled;
+  unsigned long lastToggleTime;
+  bool state;
+};
 
-const int MOTOR_PINS[8] = {2, 3, 4, 5, 6, 7, 8, 9};  
-const int NUM_MOTORS = 8;
+Motor motors[3] = {
+  {2, 3, 10, false, 0, false},
+  {4, 5, 10, false, 0, false},
+  {6, 7, 10, false, 0, false}
+};
+
+const int NUM_MOTORS = 3;
+unsigned long lastUpdateTime = 0;
 
 void setup() {
-  Serial.begin(115200);  
+  Serial.begin(9600);
   
-  //initialize motor pins
   for (int i = 0; i < NUM_MOTORS; i++) {
-    pinMode(MOTOR_PINS[i], OUTPUT);
-    analogWrite(MOTOR_PINS[i], 0);  //start off
+    pinMode(motors[i].pinA, OUTPUT);
+    pinMode(motors[i].pinB, OUTPUT);
+    digitalWrite(motors[i].pinA, LOW);
+    digitalWrite(motors[i].pinB, LOW);
   }
-  
-  Serial.println("MEGA_READY");
+
 }
 
 void loop() {
-  //read from ESP32-CAM
-  if (Serial.available() >= 10) {  //wait until full 10-byte packet
-    uint8_t packet[10];
-    Serial.readBytes(packet, 10);
+  if (Serial.available() > 0) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    parseCommand(command);
+  }
+  
+  unsigned long currentTime = millis();
+  updateMotors(currentTime);
+}
+
+void parseCommand(String cmd) {
+  if (cmd.indexOf("_freq=") > -1) {
+    int motorNum = cmd.charAt(5) - '0';
+    int eqIndex = cmd.indexOf('=');
+    int freq = cmd.substring(eqIndex + 1).toInt();
     
-    uint8_t command = packet[0];
-    uint8_t motorMask = packet[1];
-    
-    switch(command) {
-      case 0x01:  //intensity setting
-        setMotorIntensities(motorMask, &packet[2]);
-        Serial.println("OK MOTORS_SET");
-        break;
-      case 0x03:  
-        stopAllMotors();
-        Serial.println("OK MOTORS_STOP");
-        break;
-      default:
-        Serial.println("ERR UNKNOWN_CMD");
+    if (motorNum >= 1 && motorNum <= NUM_MOTORS && freq > 0) {
+      motors[motorNum - 1].frequency = freq;
+      Serial.print("Motor ");
+      Serial.print(motorNum);
+      Serial.print(" frequency set to ");
+      Serial.print(freq);
+      Serial.println(" Hz");
     }
+    return;
+  }
+  
+  // motorX_on
+  if (cmd.indexOf("_on") > -1) {
+    int motorNum = cmd.charAt(5) - '0';
+    if (motorNum >= 1 && motorNum <= NUM_MOTORS) {
+      motors[motorNum - 1].enabled = true;
+      motors[motorNum - 1].lastToggleTime = millis();
+      Serial.print("Motor ");
+      Serial.print(motorNum);
+      Serial.println(" vibration started");
+    }
+    return;
+  }
+  
+  // motorX_off
+  if (cmd.indexOf("_off") > -1) {
+    int motorNum = cmd.charAt(5) - '0';
+    if (motorNum >= 1 && motorNum <= NUM_MOTORS) {
+      motors[motorNum - 1].enabled = false;
+      motors[motorNum - 1].state = false;
+      digitalWrite(motors[motorNum - 1].pinA, LOW);
+      digitalWrite(motors[motorNum - 1].pinB, LOW);
+      Serial.print("Motor ");
+      Serial.print(motorNum);
+      Serial.println(" stopped");
+    }
+    return;
+  }
+  
+  // all_off
+  if (cmd.equals("all_off")) {
+    for (int i = 0; i < NUM_MOTORS; i++) {
+      motors[i].enabled = false;
+      motors[i].state = false;
+      digitalWrite(motors[i].pinA, LOW);
+      digitalWrite(motors[i].pinB, LOW);
+    }
+    Serial.println("All motors stopped");
+    return;
   }
 }
 
-void setMotorIntensities(uint8_t mask, uint8_t* intensities) {
+void updateMotors(unsigned long currentTime) {
   for (int i = 0; i < NUM_MOTORS; i++) {
-    if (mask & (1 << i)) {
-      analogWrite(MOTOR_PINS[i], intensities[i]);
+    if (!motors[i].enabled) {
+      continue;
     }
-  }
-}
-
-void stopAllMotors() {
-  for (int i = 0; i < NUM_MOTORS; i++) {
-    analogWrite(MOTOR_PINS[i], 0);
+    
+    unsigned long halfPeriod = 500 / motors[i].frequency;  // 1000/(2*frequency)
+    
+    if (currentTime - motors[i].lastToggleTime >= halfPeriod) {
+      motors[i].lastToggleTime = currentTime;
+      motors[i].state = !motors[i].state;
+      
+      if (motors[i].state) {
+        digitalWrite(motors[i].pinA, HIGH);
+        digitalWrite(motors[i].pinB, LOW);
+      } else {
+        digitalWrite(motors[i].pinA, LOW);
+        digitalWrite(motors[i].pinB, HIGH);
+      }
+    }
   }
 }
