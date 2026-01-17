@@ -82,7 +82,7 @@ static void bleSendImage(camera_fb_t* fb) {
     p += n;
     remaining -= n;
 
-    delay(3);
+    delay(10);
   }
 
   uint8_t endByte = 'E';
