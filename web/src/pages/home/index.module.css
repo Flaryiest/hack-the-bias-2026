@@ -1,0 +1,356 @@
+.container {
+  padding: 2rem;
+  max-width: 75rem;
+  margin: 0 auto;
+}
+
+.section {
+  margin-top: 2rem;
+}
+
+.section h2 {
+  margin-bottom: 1rem;
+}
+
+.section ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
+.section ul li {
+  margin-bottom: 0.5rem;
+}
+
+.connectionStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 0.08rem solid #ddd;
+  border-radius: 0.5rem;
+  background-color: #f9f9f9;
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background-color: #999;
+  transition: background-color 0.3s ease;
+}
+
+.statusDot.connected {
+  background-color: #22c55e;
+  box-shadow: 0 0 0.5rem rgba(34, 197, 94, 0.5);
+}
+
+.connectButton {
+  padding: 0.75rem 1.5rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 0.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  align-self: flex-start;
+}
+
+.connectButton:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.connectButton:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.error {
+  padding: 0.75rem;
+  background-color: #fee2e2;
+  border: 0.08rem solid #fecaca;
+  border-radius: 0.4rem;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+.cameraContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 0.08rem solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+}
+
+.cameraControls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.streamStatus {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.cameraView {
+  width: 100%;
+  min-height: 20rem;
+  background-color: #000;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cameraImage {
+  max-width: 100%;
+  max-height: 40rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.noImage {
+  color: #9ca3af;
+  font-size: 1.1rem;
+}
+
+.allOffContainer {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.allOffButton {
+  min-width: 15rem;
+  font-size: 1.1rem;
+  padding: 0.9rem 2rem;
+}
+
+.motorControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr));
+  gap: 1.5rem;
+}
+
+.motorCard {
+  padding: 1.5rem;
+  border: 0.08rem solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.1);
+}
+
+.motorCard h3 {
+  margin: 0 0 1rem 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+}
+
+.controlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.controlButton {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.onButton {
+  background-color: #22c55e;
+  color: white;
+}
+
+.onButton:hover {
+  background-color: #16a34a;
+}
+
+.offButton {
+  background-color: #ef4444;
+  color: white;
+}
+
+.offButton:hover {
+  background-color: #dc2626;
+}
+
+.frequencyGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.frequencyGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.frequencyInput {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.freqInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.freqInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.setButton {
+  padding: 0.5rem 1rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.setButton:hover {
+  background-color: #1d4ed8;
+}
+
+.motorControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr));
+  gap: 1.5rem;
+}
+
+.motorCard {
+  padding: 1.5rem;
+  border: 0.08rem solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.1);
+}
+
+.motorCard h3 {
+  margin: 0 0 1rem 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+}
+
+.controlGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.controlButton {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.onButton {
+  background-color: #22c55e;
+  color: white;
+}
+
+.onButton:hover {
+  background-color: #16a34a;
+}
+
+.offButton {
+  background-color: #ef4444;
+  color: white;
+}
+
+.offButton:hover {
+  background-color: #dc2626;
+}
+
+.frequencyGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.frequencyGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.frequencyInput {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.freqInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.freqInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.setButton {
+  padding: 0.5rem 1rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.setButton:hover {
+  background-color: #1d4ed8;
+}
