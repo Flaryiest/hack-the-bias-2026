@@ -1,356 +1,453 @@
 .container {
-  padding: 2rem;
-  max-width: 75rem;
+  padding: 1rem;
+  max-width: 100%;
   margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, #0f172a 0%, #1e293b 100%);
+  color: #e2e8f0;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  text-shadow: 0 0.1rem 0.2rem rgba(124, 140, 220, 0.381);
+  letter-spacing: -0.05rem;
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  flex: 1;
+  
 }
 
 .section {
-  margin-top: 2rem;
+  background: transparent;
+  border-radius: 0;
+  padding: 0.75rem;
+  box-shadow: none;
+  margin-bottom: 0.5rem;
 }
 
 .section h2 {
-  margin-bottom: 1rem;
-}
-
-.section ul {
-  list-style-type: disc;
-  padding-left: 1.5rem;
-}
-
-.section ul li {
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .connectionStatus {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  padding: 1.5rem;
-  border: 0.08rem solid #ddd;
-  border-radius: 0.5rem;
-  background-color: #f9f9f9;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  background: #1e293b;
+  border-radius: 0;
+  box-shadow: none;
+  border-left: 4px solid #818cf8;
 }
 
 .statusIndicator {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  font-size: 0.875rem;
   font-weight: 500;
+  color: #e2e8f0;
 }
 
 .statusDot {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background-color: #999;
-  transition: background-color 0.3s ease;
+  background: #ef4444;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .statusDot.connected {
-  background-color: #22c55e;
-  box-shadow: 0 0 0.5rem rgba(34, 197, 94, 0.5);
+  background: #10b981;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .connectButton {
-  padding: 0.75rem 1.5rem;
-  background-color: #2563eb;
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
   color: white;
-  border: none;
-  border-radius: 0.4rem;
-  font-size: 1rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  align-self: flex-start;
+  border: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: none;
+  font-family: inherit;
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 95% 100%, 0 100%);
 }
 
-.connectButton:hover:not(:disabled) {
-  background-color: #1d4ed8;
+.connectButton:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
 }
 
 .connectButton:disabled {
-  background-color: #94a3b8;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .error {
-  padding: 0.75rem;
-  background-color: #fee2e2;
-  border: 0.08rem solid #fecaca;
-  border-radius: 0.4rem;
-  color: #dc2626;
-  font-size: 0.9rem;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.deviceDiagram {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
+  border-radius: 12px;
+  position: relative;
+}
+
+.deviceTop,
+.deviceMiddle,
+.deviceBottom {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.device {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  border: 2px solid #e5e7eb;
+  position: relative;
+  min-width: 120px;
+}
+
+.deviceActive {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  animation: devicePulse 2s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+@keyframes devicePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.deviceIcon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 0.5rem;
+}
+
+.deviceName {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.deviceStatus {
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .cameraContainer {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem;
-  border: 0.08rem solid #e5e7eb;
-  border-radius: 0.5rem;
-  background-color: #ffffff;
+  gap: 0.75rem;
 }
 
 .cameraControls {
   display: flex;
-  gap: 1rem;
-  align-items: center;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.controlButton {
+  padding: 0.5rem 1rem;
+  border-radius: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-family: inherit;
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 95% 100%, 0 100%);
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.onButton {
+  background: #10b981;
+  color: white;
+}
+
+.onButton:hover:not(:disabled) {
+  background: #059669;
+  filter: brightness(1.1);
+}
+
+.offButton {
+  background: #64748b;
+  color: white;
+}
+
+.offButton:hover:not(:disabled) {
+  background: #475569;
+  filter: brightness(1.1);
 }
 
 .streamStatus {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #4b5563;
+  font-size: 0.875rem;
+  color: #94a3b8;
 }
 
 .cameraView {
-  width: 100%;
-  min-height: 20rem;
-  background-color: #000;
-  border-radius: 0.5rem;
+  border: 2px solid #334155;
+  border-radius: 0;
+  padding: 0.5rem;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  background: #0f172a;
 }
 
 .cameraImage {
   max-width: 100%;
-  max-height: 40rem;
-  width: auto;
   height: auto;
-  object-fit: contain;
+  border-radius: 0;
 }
 
 .noImage {
-  color: #9ca3af;
-  font-size: 1.1rem;
+  color: #64748b;
+  font-size: 0.875rem;
 }
 
-.allOffContainer {
-  margin-top: 1.5rem;
+
+.motorControls {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 300px;
+  margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
+.motorDot {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #334155;
+  border: 3px solid #475569;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #64748b;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.motorDot:hover {
+  transform: scale(1.05);
+  border-color: #818cf8;
+}
+
+.motorDot:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.motorDot:nth-child(2) {
+  top: 30px;
+  right: 25%;
+  transform: translateX(50%);
+}
+
+.motorDot:nth-child(3) {
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.motorDot:nth-child(4) {
+  top: 30px;
+  left: 25%;
+  transform: translateX(-50%);
+}
+
+.motorDot.motorActive {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+}
+
+.motorDot:nth-child(2).motorActive {
+  animation: motorVibrateRight 0.3s ease-in-out infinite;
+}
+
+.motorDot:nth-child(3).motorActive {
+  animation: motorVibrateCenter 0.3s ease-in-out infinite;
+}
+
+.motorDot:nth-child(4).motorActive {
+  animation: motorVibrateCenter 0.3s ease-in-out infinite;
+}
+
+@keyframes motorVibrateCenter {
+  0%, 100% { transform: translateX(-50%) translate(0, 0); }
+  25% { transform: translateX(-50%) translate(-2px, 2px); }
+  50% { transform: translateX(-50%) translate(2px, -2px); }
+  75% { transform: translateX(-50%) translate(-2px, -2px); }
+}
+
+@keyframes motorVibrateRight {
+  0%, 100% { transform: translateX(50%) translate(0, 0); }
+  25% { transform: translateX(50%) translate(-2px, 2px); }
+  50% { transform: translateX(50%) translate(2px, -2px); }
+  75% { transform: translateX(50%) translate(-2px, -2px); }
+}
+
+.centerArrow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s;
+  pointer-events: none;
+}
+
+.centerArrow svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 8px rgba(129, 140, 248, 0.8));
+}
+
+.centerArrow.pointToMotor1 {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.centerArrow.pointToMotor2 {
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+
+.centerArrow.pointToMotor3 {
+  transform: translate(-50%, -50%) rotate(315deg);
+}
+
+.allOffContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .allOffButton {
-  min-width: 15rem;
-  font-size: 1.1rem;
-  padding: 0.9rem 2rem;
-}
-
-.motorControls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr));
-  gap: 1.5rem;
-}
-
-.motorCard {
-  padding: 1.5rem;
-  border: 0.08rem solid #e5e7eb;
-  border-radius: 0.5rem;
-  background-color: #ffffff;
-  box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.1);
-}
-
-.motorCard h3 {
-  margin: 0 0 1rem 0;
-  color: #1f2937;
-  font-size: 1.25rem;
-}
-
-.controlGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.buttonGroup {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.controlButton {
-  flex: 1;
-  padding: 0.6rem 1rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.onButton {
-  background-color: #22c55e;
-  color: white;
-}
-
-.onButton:hover {
-  background-color: #16a34a;
-}
-
-.offButton {
-  background-color: #ef4444;
-  color: white;
-}
-
-.offButton:hover {
-  background-color: #dc2626;
-}
-
-.frequencyGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.frequencyGroup label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.frequencyInput {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.freqInput {
-  flex: 1;
+  width: 100%;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.freqInput:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.setButton {
-  padding: 0.5rem 1rem;
-  background-color: #2563eb;
+  background: #ef4444;
   color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
+  border-radius: 0;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.setButton:hover {
-  background-color: #1d4ed8;
-}
-
-.motorControls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr));
-  gap: 1.5rem;
-}
-
-.motorCard {
-  padding: 1.5rem;
-  border: 0.08rem solid #e5e7eb;
-  border-radius: 0.5rem;
-  background-color: #ffffff;
-  box-shadow: 0 0.08rem 0.2rem rgba(0, 0, 0, 0.1);
-}
-
-.motorCard h3 {
-  margin: 0 0 1rem 0;
-  color: #1f2937;
-  font-size: 1.25rem;
-}
-
-.controlGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.buttonGroup {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.controlButton {
-  flex: 1;
-  padding: 0.6rem 1rem;
   border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s;
+  font-family: inherit;
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 95% 100%, 5% 100%, 0 70%);
 }
 
-.onButton {
-  background-color: #22c55e;
-  color: white;
+.allOffButton:hover:not(:disabled) {
+  background: #dc2626;
+  filter: brightness(1.1);
 }
 
-.onButton:hover {
-  background-color: #16a34a;
+.allOffButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.offButton {
-  background-color: #ef4444;
-  color: white;
-}
-
-.offButton:hover {
-  background-color: #dc2626;
-}
-
-.frequencyGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.frequencyGroup label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.frequencyInput {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.freqInput {
-  flex: 1;
+.commandLog {
+  background: #1e293b;
+  border-radius: 0;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1rem;
+  max-height: 120px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  border: 1px solid #334155;
+  border-left: 4px solid #3b82f6;
 }
 
-.freqInput:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+.logEntries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.setButton {
-  padding: 0.5rem 1rem;
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+.logEntry {
+  padding: 0.375rem;
+  background: #0f172a;
+  border-radius: 0;
+  border-left: 3px solid #3b82f6;
+  color: #cbd5e1;
 }
 
-.setButton:hover {
-  background-color: #1d4ed8;
+.noLog {
+  color: #64748b;
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.75rem;
 }

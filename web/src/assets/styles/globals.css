@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Bubbler+One&family=Varela+Round&display=swap");
+
 html,
 body,
 div,
@@ -121,13 +123,12 @@ table {
 }
 
 :root {
-  font-family:
-    'Inter', 'Inter Tight', 'Roboto', system-ui, Helvetica, Arial, sans-serif;
+  font-family: 'Varela Round', sans-serif;
 
   --primary-background-color: #ffffff;
   --secondary-background-color: #ffe8e5;
-  --primary-text-color: #4f4f4f;
-  --secondary-text-color: #ae838e;
+  --primary-text-color: #e5e7eb;
+  --secondary-text-color: #d8b4be;
   --primary-accent-color: #eabfb9;
 
   --sub-text-size: 0.75em;
@@ -135,7 +136,7 @@ table {
   --sub-header-text-size: 1.5em;
   --header-text-size: 2em;
 
-  background-color: var(--primary-background-color);
+  background-color: #0f172a;
   color: var(--primary-text-color);
   line-height: 1.5;
   font-weight: 400;
@@ -171,7 +172,7 @@ a {
 button {
   border: none;
   color: var(--primary-text-color);
-  background-color: var(--primary-background-color);
+  background-color: #1e293b;
   font-weight: 500;
   cursor: pointer;
   padding: 0 0 0 0;

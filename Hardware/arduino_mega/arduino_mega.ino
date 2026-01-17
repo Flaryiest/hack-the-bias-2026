@@ -28,6 +28,7 @@ void setup() {
 
 }
 
+
 void loop() {
   if (Serial1.available() > 0) {
     String command = Serial1.readStringUntil('\n');
@@ -56,7 +57,6 @@ void parseCommand(String cmd) {
     return;
   }
   
-  // motorX_on
   if (cmd.indexOf("_on") > -1) {
     int motorNum = cmd.charAt(5) - '0';
     if (motorNum >= 1 && motorNum <= NUM_MOTORS) {
@@ -69,7 +69,6 @@ void parseCommand(String cmd) {
     return;
   }
   
-  // motorX_off
   if (cmd.indexOf("_off") > -1) {
     int motorNum = cmd.charAt(5) - '0';
     if (motorNum >= 1 && motorNum <= NUM_MOTORS) {
@@ -83,8 +82,6 @@ void parseCommand(String cmd) {
     }
     return;
   }
-  
-  // all_off
   if (cmd.equals("all_off")) {
     for (int i = 0; i < NUM_MOTORS; i++) {
       motors[i].enabled = false;
@@ -103,7 +100,7 @@ void updateMotors(unsigned long currentTime) {
       continue;
     }
     
-    unsigned long halfPeriod = 500 / motors[i].frequency;  // 1000/(2*frequency)
+    unsigned long halfPeriod = 500 / motors[i].frequency; 
     
     if (currentTime - motors[i].lastToggleTime >= halfPeriod) {
       motors[i].lastToggleTime = currentTime;
