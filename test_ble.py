@@ -47,17 +47,16 @@ async def find_device():
     
     for device in devices:
         if device.name and "Hearless" in device.name:
-            print(f"✓ Found: {device.name} ({device.address})")
+            print(f"Found: {device.name} ({device.address})")
             return device.address
         if device.name:
-            print(f"  Found: {device.name}")
+            print(f"Found: {device.name}")
     
-    print("✗ Hearless device not found")
+    print("!! Hearless device not found")
     return None
 
 
 def notification_handler(sender, data):
-    """Handle notifications from device - includes images and text messages"""
     global image_buffer, image_size, receiving_image, images_received
     
 
@@ -66,7 +65,7 @@ def notification_handler(sender, data):
         image_size = struct.unpack('<I', data[1:5])[0]
         image_buffer = bytearray()
         receiving_image = True
-        print(f"← Receiving image: {image_size} bytes")
+        print(f"Receiving image: {image_size} bytes")
         return
     
     
@@ -74,7 +73,7 @@ def notification_handler(sender, data):
         if receiving_image:
             receiving_image = False
             images_received += 1
-            print(f"← Image complete: {len(image_buffer)} bytes (#{images_received})")
+            print(f"Image complete: {len(image_buffer)} bytes (#{images_received})")
             #process the image with AI
             #process_back_camera_image(image_buffer)
         return
@@ -87,34 +86,49 @@ def notification_handler(sender, data):
     
     try:
         message = data.decode('utf-8', errors='ignore')
-        print(f"← Device: {message.strip()}")
+        print(f"Device: {message.strip()}")
     except:
-        print(f"← Device (raw): {data.hex()}")
+        print(f"Device (raw): {data.hex()}")
 
 
 async def send_motor_command(client, command, motor_mask, intensities):
-    """Send 10-byte motor control packet"""
     packet = bytes([command, motor_mask] + intensities)
     await client.write_gatt_char(NUS_RX_UUID, packet, response=False)
-    print(f"→ Sent: {packet.hex()}")
+    print(f"Sent: {packet.hex()}")
 
 
 async def send_text_command(client, text):
-    """Send text command (like CAM PING)"""
     data = text.encode('utf-8')
     await client.write_gatt_char(NUS_RX_UUID, data, response=False)
-    print(f"→ Sent: {text}")
+    print(f"Sent: {text}")
+
+
+async def motor_on(client, motor_num):
+    command = f"motor{motor_num}_on"
+    await send_text_command(client, command)
+
+
+async def motor_off(client, motor_num):
+    command = f"motor{motor_num}_off"
+    await send_text_command(client, command)
+
+
+async def all_motors_off(client):
+    await send_text_command(client, "all_off")
+
+
+async def set_motor_freq(client, motor_num, frequency):
+    command = f"motor{motor_num}_freq={frequency}"
+    await send_text_command(client, command)
 
 
 async def test_connection(client):
-    """Test basic BLE connection"""
     print("\n=== Testing Connection ===")
     await send_text_command(client, "CAM PING")
     await asyncio.sleep(1)
 
 
 async def test_streaming(client, duration_seconds=5):
-    """Test continuous back camera streaming"""
     print(f"\n=== Testing Back Camera Streaming ({duration_seconds}s) ===")
     
    
@@ -130,8 +144,7 @@ async def test_streaming(client, duration_seconds=5):
 
 def direction_to_motor(angle_degrees):
     """
-    Convert sound direction angle to motor index.
-    0° = front, 90° = right, 180° = back, 270° = left
+    0 = front, 90 = right, 180 = back, 270 = left
     """
    
     angle = angle_degrees % 360 #normalize to 0-360
@@ -141,11 +154,7 @@ def direction_to_motor(angle_degrees):
     return motor_index
 
 
-def distance_to_intensity(distance_meters):
-    """
-    Convert distance to vibration intensity.
-    Closer objects = stronger vibration.
-    """
+def distance_to_intensity(distance_meters):#closer = stronger vibration    
     if distance_meters < 0.5:
         return 255 
     elif distance_meters < 1.0:
@@ -162,9 +171,7 @@ def distance_to_intensity(distance_meters):
 
 async def alert_user_to_sound(client, direction_degrees, distance_meters):
     """
-    Alert user to detected sound by vibrating appropriate motor.
-    This is what the AI would call after processing audio + camera.
-    
+    Alert user to detected sound by vibrating appropriate motor, called by ai after processing camera and aduoi
     Args:
         direction_degrees: 0=front, 90=right, 180=back, 270=left
         distance_meters: Estimated distance to sound source
@@ -172,7 +179,7 @@ async def alert_user_to_sound(client, direction_degrees, distance_meters):
     motor = direction_to_motor(direction_degrees)
     intensity = distance_to_intensity(distance_meters)
     
-    print(f"→ Alert: Sound at {direction_degrees}° (motor {motor}), {distance_meters}m away, intensity {intensity}")
+    print(f"Alert: Sound at {direction_degrees} degrees (motor {motor}), {distance_meters}m away, intensity {intensity}")
     
    
     motor_mask = 1 << motor
@@ -183,9 +190,7 @@ async def alert_user_to_sound(client, direction_degrees, distance_meters):
 
 
 async def simulate_ai_detection(client):
-    """
-    simulated AI
-    """
+    #simulated AI
     print("\n=== Simulating AI Sound Detection ===")
     
     
@@ -208,7 +213,6 @@ async def simulate_ai_detection(client):
 
 
 async def test_single_motor(client, motor_id, intensity=200):
-    """Test a single motor"""
     print(f"\n=== Testing Motor {motor_id} (Intensity: {intensity}) ===")
     
 
@@ -227,7 +231,6 @@ async def test_single_motor(client, motor_id, intensity=200):
 
 
 async def test_directional_pattern(client):
-    """Test rotating pattern around the neck"""
     print("\n=== Testing Directional Pattern ===")
     
     for motor_id in range(8):
@@ -243,7 +246,6 @@ async def test_directional_pattern(client):
 
 
 async def test_proximity_simulation(client):
-    """Simulate object approaching from the right"""
     print("\n=== Testing Proximity Simulation (Right Side) ===")
     
 
@@ -260,7 +262,6 @@ async def test_proximity_simulation(client):
 
 
 async def test_multi_motor(client):
-    """Test multiple motors simultaneously"""
     print("\n=== Testing Multiple Motors ===")
     
 
@@ -274,40 +275,78 @@ async def test_multi_motor(client):
     await send_motor_command(client, CMD_STOP_ALL, 0xFF, [0] * 8)
 
 
+async def test_phone_commands(client): #sample testing
+    print("\n=== Testing Phone Motor Commands ===")
+    
+    print("Starting motor 1...")
+    await motor_on(client, 1)
+    await asyncio.sleep(1)
+    
+    print("Setting motor 1 frequency to 50Hz...")
+    await set_motor_freq(client, 1, 50)
+    await asyncio.sleep(1)
+    
+    print("Stopping motor 1...")
+    await motor_off(client, 1)
+    await asyncio.sleep(0.5)
+    
+    print("Starting motor 2...")
+    await motor_on(client, 2)
+    await asyncio.sleep(1)
+    
+    print("Setting motor 2 frequency to 100Hz...")
+    await set_motor_freq(client, 2, 100)
+    await asyncio.sleep(1)
+    
+    print("Starting motor 3...")
+    await motor_on(client, 3)
+    await asyncio.sleep(1)
+    
+    print("Setting motor 3 frequency to 75Hz...")
+    await set_motor_freq(client, 3, 75)
+    await asyncio.sleep(1)
+
+    print("Stopping all motors...")
+    await all_motors_off(client)
+    await asyncio.sleep(0.5)
+
+
 async def main():
-    """Main test routine"""
+    #displays
     print("=" * 60)
-    print("  Hearless BLE Client")
-    print("  Sound Direction → Tactile Feedback System")
+    print("Hearless BLE Client")
+    print("  Sound Direction > Tactile Feedback System")
     print("=" * 60)
     print()
     print("System Overview:")
-    print("  - Phone: Front camera + microphone + AI processing")
-    print("  - ESP32-CAM: Back camera (worn on neck)")
-    print("  - Arduino Mega: 8 vibration motors")
+    print("Phone: Front camera + microphone + AI processing")
+    print("ESP32-CAM: Back camera (worn on neck)")
+    print("Arduino Mega: 8 vibration motors")
     print()
     
 
     address = await find_device()
     if not address:
-        print("\n✗ Cannot proceed without device")
+        print("\n!! Cannot proceed without device")
         return
     
     print(f"\nConnecting to {address}...")
     
     try:
         async with BleakClient(address, timeout=10.0) as client:
-            print("✓ Connected!")
+            print("Connected!")
             
 
             await client.start_notify(NUS_TX_UUID, notification_handler)
-            print("✓ Subscribed to notifications\n")
+            print("Subscribed to notifications\n")
             
             await asyncio.sleep(1)
         
             await test_connection(client)
             
             await test_streaming(client, duration_seconds=3)
+            
+            await test_phone_commands(client)
             
             await simulate_ai_detection(client)
             
@@ -320,7 +359,7 @@ async def main():
             await asyncio.sleep(1)
             
     except Exception as e:
-        print(f"\n✗ Error: {e}")
+        print(f"\n!!Error: {e}")
 
 
 if __name__ == "__main__":
