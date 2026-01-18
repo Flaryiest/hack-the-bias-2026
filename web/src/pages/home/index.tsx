@@ -35,10 +35,15 @@ export default function IndexPage() {
   const [detectionConfidence, setDetectionConfidence] = useState<string>('N/A');
   const [motorPowers, setMotorPowers] = useState<{motor_60: number, motor_180: number, motor_300: number}>({motor_60: 0, motor_180: 0, motor_300: 0});
   const [localWebcamStream, setLocalWebcamStream] = useState<MediaStream | null>(null);
+  const [serialConnected, setSerialConnected] = useState(false);
+  const [serialScanning, setSerialScanning] = useState(false);
   
   const imageBufferRef = useRef<Uint8Array>(new Uint8Array());
   const receivingImageRef = useRef(false);
   const deviceRef = useRef<BleDevice | null>(null);
+  const portRef = useRef<any>(null);
+  const writerRef = useRef<any>(null);
+  const readerRef = useRef<any>(null);
   const imageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const socketRef = useRef<ReturnType<typeof io> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -48,7 +53,7 @@ export default function IndexPage() {
   const webcamVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    socketRef.current = io('10.124.254.49:5000');
+    socketRef.current = io('10.171.235.49:5000');
     
     socketRef.current.on('connect', () => {
       console.log('Connected to detection server');
@@ -137,10 +142,10 @@ export default function IndexPage() {
       if (powers.motor_300 > threshold) {
         if (!motorStatus[1]?.on) {
           console.log(`Activating Motor 1 (power: ${(powers.motor_300*100).toFixed(0)}%)`);
-          if (rxCharacteristic) {
+          if (writerRef.current) {
             const command = 'motor1_on\n';
             const encoder = new TextEncoder();
-            rxCharacteristic.writeValueWithoutResponse(encoder.encode(command)).then(() => {
+            writerRef.current.write(encoder.encode(command)).then(() => {
               setMotorStatus(prev => ({
                 ...prev,
                 1: {on: true, lastCommand: command, timestamp: new Date()}
@@ -154,10 +159,10 @@ export default function IndexPage() {
         }
       } else if (motorStatus[1]?.on) {
         console.log(`Deactivating Motor 1 (power: ${(powers.motor_300*100).toFixed(0)}%)`);
-        if (rxCharacteristic) {
+        if (writerRef.current) {
           const command = 'motor1_off\n';
           const encoder = new TextEncoder();
-          rxCharacteristic.writeValueWithoutResponse(encoder.encode(command)).then(() => {
+          writerRef.current.write(encoder.encode(command)).then(() => {
             setMotorStatus(prev => ({
               ...prev,
               1: {on: false, lastCommand: command, timestamp: new Date()}
@@ -172,10 +177,10 @@ export default function IndexPage() {
       if (powers.motor_180 > threshold) {
         if (!motorStatus[2]?.on) {
           console.log(`Activating Motor 2 (power: ${(powers.motor_180*100).toFixed(0)}%)`);
-          if (rxCharacteristic) {
+          if (writerRef.current) {
             const command = 'motor2_on\n';
             const encoder = new TextEncoder();
-            rxCharacteristic.writeValueWithoutResponse(encoder.encode(command)).then(() => {
+            writerRef.current.write(encoder.encode(command)).then(() => {
               setMotorStatus(prev => ({
                 ...prev,
                 2: {on: true, lastCommand: command, timestamp: new Date()}
@@ -189,10 +194,10 @@ export default function IndexPage() {
         }
       } else if (motorStatus[2]?.on) {
         console.log(`Deactivating Motor 2 (power: ${(powers.motor_180*100).toFixed(0)}%)`);
-        if (rxCharacteristic) {
+        if (writerRef.current) {
           const command = 'motor2_off\n';
           const encoder = new TextEncoder();
-          rxCharacteristic.writeValueWithoutResponse(encoder.encode(command)).then(() => {
+          writerRef.current.write(encoder.encode(command)).then(() => {
             setMotorStatus(prev => ({
               ...prev,
               2: {on: false, lastCommand: command, timestamp: new Date()}
@@ -208,10 +213,10 @@ export default function IndexPage() {
       if (powers.motor_60 > threshold) {
         if (!motorStatus[3]?.on) {
           console.log(`Activating Motor 3 (power: ${(powers.motor_60*100).toFixed(0)}%)`);
-          if (rxCharacteristic) {
+          if (writerRef.current) {
             const command = 'motor3_on\n';
             const encoder = new TextEncoder();
-            rxCharacteristic.writeValueWithoutResponse(encoder.encode(command)).then(() => {
+            writerRef.current.write(encoder.encode(command)).then(() => {
               setMotorStatus(prev => ({
                 ...prev,
                 3: {on: true, lastCommand: command, timestamp: new Date()}
@@ -225,10 +230,10 @@ export default function IndexPage() {
         }
       } else if (motorStatus[3]?.on) {
         console.log(`Deactivating Motor 3 (power: ${(powers.motor_60*100).toFixed(0)}%)`);
-        if (rxCharacteristic) {
+        if (writerRef.current) {
           const command = 'motor3_off\n';
           const encoder = new TextEncoder();
-          rxCharacteristic.writeValueWithoutResponse(encoder.encode(command)).then(() => {
+          writerRef.current.write(encoder.encode(command)).then(() => {
             setMotorStatus(prev => ({
               ...prev,
               3: {on: false, lastCommand: command, timestamp: new Date()}
@@ -250,7 +255,7 @@ export default function IndexPage() {
     const value = target.value as DataView;
     const data = new Uint8Array(value.buffer);
 
-    if (data.length >= 2 && data[0] === 0x54 && data[1] === 0x3A) { // 'T:'
+    if (data.length >= 2 && data[0] === 0x54 && data[1] === 0x3A) { //'T'
       try {
         const message = new TextDecoder().decode(data);
         const trimmed = message.trim().substring(2); 
@@ -267,7 +272,7 @@ export default function IndexPage() {
       }
       return;
     }
-    if (data.length >= 5 && data[0] === 0x49) { // 'I'
+    if (data.length >= 5 && data[0] === 0x49) { //'I'
       const imageSize = new DataView(data.buffer, 1, 4).getUint32(0, true);
       imageBufferRef.current = new Uint8Array();
       receivingImageRef.current = true;
@@ -286,7 +291,7 @@ export default function IndexPage() {
       return;
     }
 
-    if (data.length === 1 && data[0] === 0x45) { // 'E'
+    if (data.length === 1 && data[0] === 0x45) { //'E'
       if (receivingImageRef.current) {
         if (imageTimeoutRef.current) {
           clearTimeout(imageTimeoutRef.current);
@@ -344,6 +349,98 @@ export default function IndexPage() {
 
     console.log('Unknown data:', Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' '));
   }, [addToLog]);
+
+  const readSerial = async (reader: any) => {
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const text = new TextDecoder().decode(value);
+        if (text.trim()) {
+          console.log('Arduino:', text.trim());
+          addToLog(`Arduino: ${text.trim()}`);
+        }
+      }
+    } catch (err) {
+      console.log('Reader stopped');
+    }
+  };
+
+  const connectToArduino = async () => {
+    setSerialScanning(true);
+    setError('');
+    addToLog('Requesting serial port...');
+
+    try {
+      const serial = (navigator as any).serial;
+      if (!serial) {
+        throw new Error('Web Serial API is not supported. Use Chrome or Edge.');
+      }
+
+      const port = await serial.requestPort();
+      portRef.current = port;
+
+      await port.open({ baudRate: 115200 });
+      addToLog('Serial port opened at 115200 baud');
+
+      const writer = port.writable.getWriter();
+      writerRef.current = writer;
+
+      const reader = port.readable.getReader();
+      readerRef.current = reader;
+
+      readSerial(reader);
+
+      setSerialConnected(true);
+      setSerialScanning(false);
+      addToLog('Connected to Arduino Mega via Serial');
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await writer.write(new TextEncoder().encode('motor1_off\n'));
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await writer.write(new TextEncoder().encode('motor2_off\n'));
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await writer.write(new TextEncoder().encode('motor3_off\n'));
+      addToLog('Initial motor stop commands sent');
+
+    } catch (err) {
+      console.error('Serial error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Failed to connect';
+      setError(errorMsg);
+      addToLog(`Serial Error: ${errorMsg}`);
+      setSerialScanning(false);
+    }
+  };
+
+  const disconnectArduino = async () => {
+    try {
+      if (writerRef.current) {
+        const encoder = new TextEncoder();
+        await writerRef.current.write(encoder.encode('motor1_off\n'));
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await writerRef.current.write(encoder.encode('motor2_off\n'));
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await writerRef.current.write(encoder.encode('motor3_off\n'));
+        writerRef.current.releaseLock();
+      }
+      if (readerRef.current) {
+        await readerRef.current.cancel();
+        readerRef.current.releaseLock();
+      }
+      if (portRef.current) {
+        await portRef.current.close();
+      }
+    } catch (err) {
+      console.log('Disconnect error:', err);
+    }
+    
+    portRef.current = null;
+    writerRef.current = null;
+    readerRef.current = null;
+    setSerialConnected(false);
+    setMotorStatus({1: {on: false, lastCommand: '', timestamp: null}, 2: {on: false, lastCommand: '', timestamp: null}, 3: {on: false, lastCommand: '', timestamp: null}});
+    addToLog('Arduino disconnected');
+  };
 
   const sendCommand = async (command: string): Promise<boolean> => {
     if (!rxCharacteristic) {
@@ -633,7 +730,37 @@ export default function IndexPage() {
       </div>
 
       <section className={styles.section}>
-        <h2>Bluetooth Connection</h2>
+        <h2>Serial Connection (Motors)</h2>
+        <div className={styles.connectionStatus}>
+          <div className={styles.statusIndicator}>
+            <span className={`${styles.statusDot} ${serialConnected ? styles.connected : ''}`}></span>
+            <span>{serialConnected ? 'Arduino Connected' : 'Arduino Not Connected'}</span>
+          </div>
+          
+          {!serialConnected && (
+            <button 
+              className={styles.connectButton}
+              onClick={connectToArduino}
+              disabled={serialScanning}
+            >
+              {serialScanning ? 'Connecting...' : 'Connect Arduino'}
+            </button>
+          )}
+          
+          {serialConnected && (
+            <button 
+              className={styles.connectButton}
+              onClick={disconnectArduino}
+              style={{ background: '#ef4444' }}
+            >
+              Disconnect Arduino
+            </button>
+          )}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2>Bluetooth Connection (Camera)</h2>
         <div className={styles.connectionStatus}>
           <div className={styles.statusIndicator}>
             <span className={`${styles.statusDot} ${isConnected ? styles.connected : ''}`}></span>
