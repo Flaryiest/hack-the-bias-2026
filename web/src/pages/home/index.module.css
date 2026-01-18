@@ -49,6 +49,46 @@
   margin-bottom: 0.5rem;
 }
 
+.detectionControls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.detectionInfo {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detectionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.detectionRow:last-child {
+  border-bottom: none;
+}
+
+.detectionLabel {
+  font-weight: 600;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.detectionValue {
+  color: #e2e8f0;
+  font-weight: 500;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
 .section h2 {
   font-size: 1rem;
   font-weight: 600;
@@ -248,9 +288,19 @@
   padding: 0.5rem;
   min-height: 200px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.cameraLabel {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  text-align: center;
 }
 
 .cameraImage {

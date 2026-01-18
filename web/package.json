@@ -15,6 +15,7 @@
     "react-checkmark": "^2.1.1",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.3.0",
+    "socket.io-client": "^4.8.3",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "devDependencies": {
