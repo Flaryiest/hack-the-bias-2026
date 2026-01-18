@@ -35,3 +35,8 @@ Our team learned that there's many things that we often take for granted, that s
 ## What's next for Hearless - AI Bluetooth Wearable
 To further add onto this design, we would like to implement a feature where users could customize different vibrations to react to different sounds, which would provide a more comprehensive output to the user.
 
+## To run the UI
+Run the following commands in terminal. 
+cd web
+npm i
+npm run dev
