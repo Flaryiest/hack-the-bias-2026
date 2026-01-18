@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continuous Audio/Video Stream</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        h1 { color: #4CAF50; }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #3d3d3d;
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover { background: #45a049; }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        button.stop { background: #f44336; }
+        button.stop:hover { background: #da190b; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.connected { background: #4CAF50; color: white; }
+        .status.disconnected { background: #f44336; color: white; }
+        .status.streaming { background: #2196F3; color: white; }
+        video {
+            width: 320px;
+            height: 240px;
+            background: #000;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        .motor-display {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .motor-item {
+            background: #4d4d4d;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .motor-bar {
+            height: 40px;
+            background: #666;
+            border-radius: 5px;
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .motor-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .motor-label {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 2px #000;
+            z-index: 1;
+        }
+        .detection-info {
+            background: #4d4d4d;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .detection-info h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Continuous Audio/Video Stream</h1>
+        
+        <div class="section">
+            <h2>Connection Status</h2>
+            <div id="connectionStatus" class="status disconnected">Disconnected</div>
+            <div id="streamingStatus" class="status" style="display:none;">Not Streaming</div>
+        </div>
+
+        <div class="section">
+            <h2>📹 Webcam Preview</h2>
+            <video id="webcam" autoplay playsinline></video>
+        </div>
+
+        <div class="section">
+            <h2>Controls</h2>
+            <button id="startBtn" onclick="startStreaming()">Start Stream</button>
+            <button id="stopBtn" class="stop" onclick="stopStreaming()" disabled>Stop Stream</button>
+            <div style="margin-top: 10px; color: #aaa;">
+                <small>Captures webcam image every 2 seconds and processes audio continuously</small>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Detection Results</h2>
+            <div id="detectionInfo" class="detection-info">
+                <p>Waiting for stream...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⚡ Motor Powers (Real-time)</h2>
+            <div id="motorDisplay" class="motor-display">
+                <div class="motor-item">
+                    <div>Motor 60° (Front-Right)</div>
+                    <div class="motor-bar">
+                        <div id="motor60Fill" class="motor-bar-fill" style="width: 0%"></div>
+                        <div class="motor-label">
+                            <span id="motor60Label">0.000 (0%)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="motor-item">
+                    <div>Motor 180° (Back)</div>
+                    <div class="motor-bar">
+                        <div id="motor180Fill" class="motor-bar-fill" style="width: 0%"></div>
+                        <div class="motor-label">
+                            <span id="motor180Label">0.000 (0%)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="motor-item">
+                    <div>Motor 300° (Front-Left)</div>
+                    <div class="motor-bar">
+                        <div id="motor300Fill" class="motor-bar-fill" style="width: 0%"></div>
+                        <div class="motor-label">
+                            <span id="motor300Label">0.000 (0%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let mediaRecorder = null;
+        let audioStream = null;
+        let videoStream = null;
+        let isStreaming = false;
+        let imageInterval = null;
+        let audioProcessInterval = null;
+
+        // Connect to WebSocket on load
+        window.onload = () => {
+            connectWebSocket();
+            initWebcam();
+        };
+
+        function connectWebSocket() {
+            socket = io('http://localhost:5000');
+            
+            socket.on('connect', () => {
+                document.getElementById('connectionStatus').className = 'status connected';
+                document.getElementById('connectionStatus').textContent = '✅ Connected';
+            });
+
+            socket.on('disconnect', () => {
+                document.getElementById('connectionStatus').className = 'status disconnected';
+                document.getElementById('connectionStatus').textContent = '❌ Disconnected';
+                stopStreaming();
+            });
+
+            socket.on('stream_started', () => {
+                console.log('Audio stream started');
+            });
+
+            socket.on('stream_stopped', () => {
+                console.log('Audio stream stopped');
+            });
+
+            socket.on('result', (data) => {
+                updateDisplay(data);
+            });
+
+            socket.on('error', (data) => {
+                console.error('Error:', data.message);
+                document.getElementById('detectionInfo').innerHTML = 
+                    `<p style="color: #f44336;">Error: ${data.message}</p>`;
+            });
+        }
+
+        async function initWebcam() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 },
+                    audio: false
+                });
+                document.getElementById('webcam').srcObject = videoStream;
+            } catch (error) {
+                alert('Error accessing webcam: ' + error.message);
+            }
+        }
+
+        async function startStreaming() {
+            if (!socket || !socket.connected) {
+                alert('Not connected to server');
+                return;
+            }
+
+            try {
+                // Start audio stream
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+                    ? 'audio/webm;codecs=opus' 
+                    : 'audio/webm';
+                
+                mediaRecorder = new MediaRecorder(audioStream, { 
+                    mimeType: mimeType
+                });
+
+                // Tell server to start audio stream
+                socket.emit('start_audio_stream');
+
+                let audioChunks = [];
+
+                // Collect all chunks during recording
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        console.log('Chunk received:', event.data.size, 'bytes');
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                // When recording stops, send the complete blob
+                mediaRecorder.onstop = () => {
+                    console.log('Recording stopped, chunks collected:', audioChunks.length);
+                    if (audioChunks.length > 0) {
+                        const audioBlob = new Blob(audioChunks, { type: mimeType });
+                        console.log('Sending audio blob:', audioBlob.size, 'bytes');
+                        
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const base64 = reader.result.split(',')[1];
+                            socket.emit('audio_chunk', { chunk: base64 });
+                            socket.emit('process_audio_buffer');
+                        };
+                        reader.readAsDataURL(audioBlob);
+                        
+                        audioChunks = [];
+                    }
+                    
+                    // Restart recording if still streaming
+                    if (isStreaming && mediaRecorder && audioStream) {
+                        console.log('Restarting recording...');
+                        mediaRecorder.start();
+                    }
+                };
+
+                // Start recording (no timeslice = collect until stop)
+                mediaRecorder.start();
+                console.log('Audio recording started');
+
+                isStreaming = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('streamingStatus').style.display = 'block';
+                document.getElementById('streamingStatus').className = 'status streaming';
+                document.getElementById('streamingStatus').textContent = '🔴 LIVE - Streaming';
+
+                // Capture and send webcam images every 2 seconds
+                imageInterval = setInterval(captureAndSendImages, 2000);
+
+                // Stop/restart recorder every 3 seconds to create complete audio segments
+                audioProcessInterval = setInterval(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        console.log('Stopping recorder to process audio...');
+                        mediaRecorder.stop();
+                    }
+                }, 3000);
+
+            } catch (error) {
+                alert('Error starting stream: ' + error.message);
+            }
+        }
+
+        function stopStreaming() {
+            isStreaming = false;
+
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+            }
+
+            if (imageInterval) {
+                clearInterval(imageInterval);
+            }
+
+            if (audioProcessInterval) {
+                clearInterval(audioProcessInterval);
+            }
+
+            if (socket && socket.connected) {
+                socket.emit('stop_audio_stream');
+            }
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('streamingStatus').textContent = '⏹️ Stopped';
+            document.getElementById('streamingStatus').className = 'status';
+        }
+
+        function captureAndSendImages() {
+            const video = document.getElementById('webcam');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            canvas.toBlob((blob) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    
+                    // Use same image for both front and back for now
+                    socket.emit('image_stream', { camera: 'front', image: base64 });
+                    socket.emit('image_stream', { camera: 'back', image: base64 });
+                };
+                reader.readAsDataURL(blob);
+            }, 'image/jpeg', 0.8);
+        }
+
+        function updateDisplay(data) {
+            // Update detection info
+            const detectionHtml = `
+                <h3>Latest Detection</h3>
+                <p><strong>Sound:</strong> ${data.sound || 'N/A'}</p>
+                <p><strong>Angle:</strong> ${data.angle !== null ? data.angle.toFixed(2) + '°' : 'N/A'}</p>
+                ${data.detection_info ? `
+                    <p><strong>Detected Object:</strong> ${data.detection_info.object_description || 'None'}</p>
+                    <p><strong>Camera:</strong> ${data.detection_info.camera || 'N/A'}</p>
+                    <p><strong>Confidence:</strong> ${data.detection_info.confidence || 'N/A'}</p>
+                ` : ''}
+                <p style="color: #888; font-size: 12px;">Last updated: ${new Date().toLocaleTimeString()}</p>
+            `;
+            document.getElementById('detectionInfo').innerHTML = detectionHtml;
+
+            // Update motor displays
+            if (data.motor_powers) {
+                updateMotor('motor60', data.motor_powers.motor_60 || 0);
+                updateMotor('motor180', data.motor_powers.motor_180 || 0);
+                updateMotor('motor300', data.motor_powers.motor_300 || 0);
+
+                // Console log for debugging
+                console.log('Motor Powers:', data.motor_powers);
+            }
+        }
+
+        function updateMotor(motorId, value) {
+            const percentage = (value * 100).toFixed(1);
+            const fillElement = document.getElementById(motorId + 'Fill');
+            const labelElement = document.getElementById(motorId + 'Label');
+            
+            if (fillElement && labelElement) {
+                fillElement.style.width = percentage + '%';
+                labelElement.textContent = `${value.toFixed(3)} (${percentage}%)`;
+            }
+        }
+    </script>
+</body>
+</html>
